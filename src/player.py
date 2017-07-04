@@ -2,7 +2,7 @@ from collections import namedtuple, Counter
 from enum import Enum
 from random import shuffle
 
-from const import MAX_HEALTH
+from bang_types import MAX_HEALTH, MAX_ARROWS
 
 
 class Role(Enum):
@@ -24,10 +24,10 @@ add_which_role = {
 }
 
 
-
 class Player(namedtuple('_Player', ['player_no', 'life', 'arrows', 'role'])):
     def __str__(self):
         return "Player {} hp:{} ap:{}".format(self.player_no, self.life, self.arrows)
+
 
 Player.__new__.__defaults__ = (None, 8, 0, None)
 
@@ -35,12 +35,19 @@ Player.__new__.__defaults__ = (None, 8, 0, None)
 class AddPlayer(namedtuple('_AddPlayer', ['num'])):
     def apply(self, game):
         for _ in range(0, self.num):
-            player_no = game.num_players + 1
-            new_role = add_which_role[player_no]
+            if self.validate(game):
+                player_no = game.num_players + 1
+                new_role = add_which_role[player_no]
 
-            game.players.append(Player(player_no=player_no, role=new_role))
+                game.players.append(Player(player_no=player_no, role=new_role))
+            else:
+                print("Can't add more players to the game!")
+                break
 
         return game
+
+    def validate(self, game):
+        return game.num_players + self.num <= max(add_which_role.keys())
 
 
 class ShufflePlayers(object):
@@ -80,7 +87,7 @@ class CheckGameEnd(object):
             print("SHERRIF WINS")
             return Role.SHERRIF
         elif (
-            alive_roles[Role.RENEGADE] == 1 and
+                alive_roles[Role.RENEGADE] == 1 and
             not (
                 alive_roles[Role.SHERRIF] +
                 alive_roles[Role.VICE] +
@@ -91,7 +98,7 @@ class CheckGameEnd(object):
             return Role.RENEGADE
         elif (
             not (alive_roles[Role.SHERRIF]) and
-            alive_roles[Role.RENEGADE] != 1
+                alive_roles[Role.RENEGADE] != 1
         ):
             print("OUTLAW_WIN")
             return Role.OUTLAW
@@ -106,59 +113,102 @@ class GetPlayer(namedtuple('_GetPlayer', ['players'])):
                 return player
 
 
-class TakeArrow(namedtuple('_TakeArrow', ['player'])):
+class UpdatePlayers(namedtuple('_GetPlayer', ['players', 'player'])):
+    def apply(self):
+        return [player if player.player_no != self.player.player_no else self.player for player in self.players]
+
+
+class ResolveArrows(namedtuple('_ResolveArrows', ['players', 'player'])):
+    def apply(self):
+        new_life = self.player.life - self.player.arrows
+        player = self.player._replace(life=new_life)
+        player = player._replace(arrows=0)
+
+        return player
+
+
+class TakeArrow(namedtuple('_TakeArrow', ['players', 'player'])):
     def apply(self, quantity):
-        new_arrows = self.player.arrows + quantity
-        self.player._replace(arrows=new_arrows)
+        players = self.players
+        player = GetPlayer(players).apply(int(self.player.player_no))
 
-        return self.player
+        for _ in range(0, quantity):
+            player = player._replace(arrows=player.arrows + 1)
+
+            if self.check_resolve(players):
+                player = ResolveArrows(players).apply()
+
+        return UpdatePlayers(players, player).apply()
+
+    @staticmethod
+    def check_resolve(players):
+        no_of_arrows = 0
+        for player in players:
+            no_of_arrows += player.arrows
+
+        return no_of_arrows >= MAX_ARROWS
 
 
-class RemoveArrow(namedtuple('_RemoveArrow', ['player'])):
+class RemoveArrow(namedtuple('_RemoveArrow', ['players', 'player'])):
     def apply(self, quantity):
-        if self.validate(quantity):
-            new_arrows = self.player.arrows - quantity
-            self.player._replace(arrows=new_arrows)
+        players = self.players
+        player = GetPlayer(players).apply(int(self.player.player_no))
+
+        if self.validate(player, quantity):
+            new_arrows = player.arrows - quantity
+            player = player._replace(arrows=new_arrows)
         else:
-            print("Not able to remove an arrow from player {}".format(self.player.player_no))
+            print("Not able to remove an arrow from player {}".format(player.player_no))
 
-        return self.player
+        return UpdatePlayers(players, player).apply()
 
-    def validate(self, quantity):
-        return self.player.arrows - quantity >= 0
+    @staticmethod
+    def validate(player, quantity):
+        return player.arrows - quantity >= 0
 
 
-class LoseLife(namedtuple('_LoseLife', ['player'])):
+class LoseLife(namedtuple('_LoseLife', ['players', 'player'])):
     def apply(self, quantity):
-        if self.validate(quantity):
-            new_life = self.player.life - quantity
-            self.player._replace(life=new_life)
+        players = self.players
+        player = GetPlayer(players).apply(int(self.player.player_no))
+
+        if self.validate(player, quantity):
+            new_life = player.life - quantity
+            player = player._replace(life=new_life)
         else:
             print("This player is dead!")
 
-        return self.player
+        return UpdatePlayers(players, player).apply()
 
-    def validate(self, quantity):
-        return self.player.life - quantity >= 0
+    @staticmethod
+    def validate(player, quantity):
+        return player.life - quantity >= 0
 
 
-class GainLife(namedtuple('_GainLife', ['player'])):
+class GainLife(namedtuple('_GainLife', ['players', 'player'])):
     def apply(self, quantity):
-        if self.validate(quantity):
-            new_life = self.player.life + quantity
-            self.player._replace(life=new_life)
+        players = self.players
+        player = GetPlayer(players).apply(int(self.player.player_no))
+
+        if self.validate(player, quantity):
+            new_life = player.life + quantity
+            player = player._replace(life=new_life)
         else:
             print("This player is on max health!")
 
-        return self.player
+        return UpdatePlayers(players, player).apply()
 
-    def validate(self, quantity):
-        return self.player.life + quantity < MAX_HEALTH
+    @staticmethod
+    def validate(player, quantity):
+        return player.life + quantity <= MAX_HEALTH
 
 
-class BlowUp(namedtuple('_BlowUp', ['player'])):
+class BlowUp(namedtuple('_BlowUp', ['players', 'player'])):
     def apply(self, quantity):
-        new_life = self.player.life - quantity
-        self.player._replace(life=new_life)
+        players = self.players
+        player = GetPlayer(players).apply(int(self.player.player_no))
 
-        return self.player
+        new_life = player.life - quantity
+        player = player._replace(life=new_life)
+
+        return UpdatePlayers(players, player).apply()

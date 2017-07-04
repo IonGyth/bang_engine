@@ -1,6 +1,6 @@
 from collections import namedtuple
 
-from const import NO_OF_PLAYERS, MAX_ARROWS
+from bang_types import MAX_ARROWS, NO_OF_PLAYERS
 from dice import Die
 from player import (
     LoseLife,
@@ -94,10 +94,12 @@ class DoBeer(namedtuple('_DoBeer', ['player'])):
         for player in players:
             print("({}) player {}".format(player.player_no, player))
 
-        player_no = input("Which player would you like to beer?")
-        player = GetPlayer(players).apply(int(player_no))
+        while True:
+            player_no = input("Which player would you like to beer?")
+            player = GetPlayer(players).apply(int(player_no))
 
-        GainLife(player).apply(1)
+            if GainLife(player).validate(1):
+                GainLife(player).apply(1)
 
 
 class DoShot1(namedtuple('_DoShot1', ['player'])):
@@ -155,6 +157,13 @@ class DoGatlings(namedtuple('_DoGatlings', ['player'])):
 
 
 class ResolveArrows(namedtuple('_ResolveArrows', ['players'])):
-    def prompt(self):
+    def apply(self):
         for player in self.players:
-            player.life -= player.arrows
+            ResolveArrows(player).apply()
+
+    def validate(self):
+        no_of_arrows = 0
+        for player in self.players:
+            no_of_arrows += player.arrows
+
+        return no_of_arrows >= MAX_ARROWS
