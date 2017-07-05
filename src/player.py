@@ -6,14 +6,14 @@ from bang_types import MAX_HEALTH, MAX_ARROWS
 
 
 class Role(Enum):
-    SHERRIF = 0
+    SHERIFF = 0
     VICE = 1
     RENEGADE = 2
     OUTLAW = 3
 
 
 add_which_role = {
-    1: Role.SHERRIF,
+    1: Role.SHERIFF,
     2: Role.RENEGADE,
     3: Role.OUTLAW,
     4: Role.OUTLAW,
@@ -35,7 +35,7 @@ Player.__new__.__defaults__ = (None, 8, 0, None)
 class AddPlayer(namedtuple('_AddPlayer', ['num'])):
     def apply(self, game):
         for _ in range(0, self.num):
-            if self.validate(game):
+            if self.isvalid(game):
                 player_no = game.num_players + 1
                 new_role = add_which_role[player_no]
 
@@ -46,7 +46,7 @@ class AddPlayer(namedtuple('_AddPlayer', ['num'])):
 
         return game
 
-    def validate(self, game):
+    def isvalid(self, game):
         return game.num_players + self.num <= max(add_which_role.keys())
 
 
@@ -82,14 +82,14 @@ class CheckGameEnd(object):
 
         if (
             not (alive_roles[Role.OUTLAW] + alive_roles[Role.RENEGADE]) and
-            alive_roles[Role.SHERRIF]
+            alive_roles[Role.SHERIFF]
         ):
-            print("SHERRIF WINS")
-            return Role.SHERRIF
+            print("SHERIFF WINS")
+            return Role.SHERIFF
         elif (
                 alive_roles[Role.RENEGADE] == 1 and
             not (
-                alive_roles[Role.SHERRIF] +
+                alive_roles[Role.SHERIFF] +
                 alive_roles[Role.VICE] +
                 alive_roles[Role.OUTLAW]
             )
@@ -97,7 +97,7 @@ class CheckGameEnd(object):
             print("RENEGADE WIN")
             return Role.RENEGADE
         elif (
-            not (alive_roles[Role.SHERRIF]) and
+            not (alive_roles[Role.SHERIFF]) and
                 alive_roles[Role.RENEGADE] != 1
         ):
             print("OUTLAW_WIN")
@@ -154,7 +154,7 @@ class RemoveArrow(namedtuple('_RemoveArrow', ['players', 'player'])):
         players = self.players
         player = GetPlayer(players).apply(int(self.player.player_no))
 
-        if self.validate(player, quantity):
+        if self.isvalid(player, quantity):
             new_arrows = player.arrows - quantity
             player = player._replace(arrows=new_arrows)
         else:
@@ -163,7 +163,7 @@ class RemoveArrow(namedtuple('_RemoveArrow', ['players', 'player'])):
         return UpdatePlayers(players, player).apply()
 
     @staticmethod
-    def validate(player, quantity):
+    def isvalid(player, quantity):
         return player.arrows - quantity >= 0
 
 
@@ -172,7 +172,7 @@ class LoseLife(namedtuple('_LoseLife', ['players', 'player'])):
         players = self.players
         player = GetPlayer(players).apply(int(self.player.player_no))
 
-        if self.validate(player, quantity):
+        if self.isvalid(player, quantity):
             new_life = player.life - quantity
             player = player._replace(life=new_life)
         else:
@@ -181,7 +181,7 @@ class LoseLife(namedtuple('_LoseLife', ['players', 'player'])):
         return UpdatePlayers(players, player).apply()
 
     @staticmethod
-    def validate(player, quantity):
+    def isvalid(player, quantity):
         return player.life - quantity >= 0
 
 
@@ -190,7 +190,7 @@ class GainLife(namedtuple('_GainLife', ['players', 'player'])):
         players = self.players
         player = GetPlayer(players).apply(int(self.player.player_no))
 
-        if self.validate(player, quantity):
+        if self.isvalid(player, quantity):
             new_life = player.life + quantity
             player = player._replace(life=new_life)
         else:
@@ -199,7 +199,7 @@ class GainLife(namedtuple('_GainLife', ['players', 'player'])):
         return UpdatePlayers(players, player).apply()
 
     @staticmethod
-    def validate(player, quantity):
+    def isvalid(player, quantity):
         return player.life + quantity <= MAX_HEALTH
 
 
