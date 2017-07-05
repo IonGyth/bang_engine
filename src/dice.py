@@ -99,7 +99,7 @@ class TurnRoll(namedtuple('_TurnRoll', ['players', 'player'])):
         while True:
             print(Dice(dice))
 
-            reroll_hint = ''.join(['{}={}, '.format(die.value, die.name) for die in Die])
+            reroll_hint = ', '.join(['{}={}'.format(die.value, die.name) for die in Die])
             reroll = input("Reroll what? " + reroll_hint)
 
             if not self.validate(dice, reroll):
