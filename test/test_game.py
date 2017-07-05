@@ -33,6 +33,13 @@ class TestGame(TestCase):
             UpdatePlayers(self.players, player2._replace(life=7)).apply()
         )
 
+    # HINT: Must end on a legal target or else there's an infinite loop.
+    @patch('game.DoShot1.get_response', side_effect=['3', '2'])
+    def test_do_shot1_validates_target(self, get_response):
+        DoShot1(self.player).prompt(self.players)
+
+        self.assertEqual(get_response.call_count, 2)
+
     @patch('game.DoShot2.get_response', return_value='3')
     def test_do_shot2(self, get_response):
         player3 = GetPlayer(self.players).apply(3)
@@ -41,6 +48,12 @@ class TestGame(TestCase):
             DoShot2(self.player).prompt(self.players),
             UpdatePlayers(self.players, player3._replace(life=7)).apply()
         )
+
+    @patch('game.DoShot2.get_response', side_effect=['2', '3'])
+    def test_do_shot2_validates_target(self, get_response):
+        DoShot2(self.player).prompt(self.players)
+
+        self.assertEqual(get_response.call_count, 2)
 
     @patch('game.DoBeer.get_response', return_value='2')
     def test_do_beer(self, get_response_b):

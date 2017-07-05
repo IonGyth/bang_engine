@@ -109,10 +109,10 @@ class DoBeer(namedtuple('_DoBeer', ['player'])):
 class DoShot1(namedtuple('_DoShot1', ['player'])):
     def prompt(self, players):
 
-        shoot_players = (
-            players[(self.player.player_no - 1) % (NO_OF_PLAYERS - 1)],
-            players[(self.player.player_no + 1) % (NO_OF_PLAYERS - 1)],
-        )
+        shoot_players = {
+            players[(self.player.player_no - 2) % (NO_OF_PLAYERS - 1)],
+            players[(self.player.player_no) % (NO_OF_PLAYERS - 1)],
+        }
 
         for player in shoot_players:
             print("({}) player {}".format(player.player_no, player))
@@ -120,6 +120,10 @@ class DoShot1(namedtuple('_DoShot1', ['player'])):
         while True:
             player_no = self.get_response()
             player = GetPlayer(players).apply(int(player_no))
+
+            if player not in shoot_players:
+                print("Invalid choice. Try again.")
+                continue
 
             if LoseLife(players, player).isvalid(player, 1):
                 players = LoseLife(players, player).apply(1)
@@ -135,16 +139,20 @@ class DoShot1(namedtuple('_DoShot1', ['player'])):
 class DoShot2(namedtuple('_DoShot2', ['player'])):
     def prompt(self, players):
 
-        shoot_players = (
-            players[(self.player.player_no - 2) % (NO_OF_PLAYERS - 1)],
-            players[(self.player.player_no + 2) % (NO_OF_PLAYERS - 1)],
-        )
+        shoot_players = {
+            players[(self.player.player_no - 3) % (NO_OF_PLAYERS - 1)],
+            players[(self.player.player_no + 1) % (NO_OF_PLAYERS - 1)],
+        }
         for player in shoot_players:
             print("({}) player {}".format(player.player_no, player))
 
         while True:
             player_no = self.get_response()
             player = GetPlayer(players).apply(int(player_no))
+
+            if player not in shoot_players:
+                print("Invalid choice. Try again.")
+                continue
 
             if LoseLife(player, player).isvalid(player, 1):
                 players = LoseLife(players, player).apply(1)
