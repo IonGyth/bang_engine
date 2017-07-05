@@ -13,6 +13,9 @@ from player import (
 
 
 class Game(namedtuple('_Game', ['players', 'moves'])):
+    def __new__(cls, players=None, moves=None):
+        return super(Game, cls).__new__(cls, players or [], moves or [])
+
     @property
     def next_player(self):
         if not self.moves:
@@ -26,16 +29,28 @@ class Game(namedtuple('_Game', ['players', 'moves'])):
 
         last_move = self.moves[-1]
         last_player = last_move.player
-
-        player_index = self.players.index(last_player)
-        return self.players[(player_index + 1) % NO_OF_PLAYERS]
+        return clockwise_player(self.players, last_player, 1)
 
     @property
     def num_players(self):
         return len(self.players)
 
 
-Game.__new__.__defaults__ = ([], [])
+def clockwise_player(players, player, n):
+    i = players.index(player)
+    while n:
+        i = (i + 1) % len(players)
+        if players[i] is not player:
+            n -= 1
+    return players[i]
+
+def counterclockwise_player(players, player, n):
+    i = players.index(player)
+    while n:
+        i = (i - 1 if i > 0 else len(players) - 1) % len(players)
+        if players[i] is not player:
+            n -= 1
+    return players[i]
 
 
 class OfferActions(namedtuple('_OfferActions', ['players', 'player'])):
@@ -110,8 +125,8 @@ class DoShot1(namedtuple('_DoShot1', ['player'])):
     def prompt(self, players):
 
         shoot_players = {
-            players[(self.player.player_no - 2) % (NO_OF_PLAYERS - 1)],
-            players[(self.player.player_no) % (NO_OF_PLAYERS - 1)],
+            clockwise_player(players, self.player, 1),
+            counterclockwise_player(players, self.player, 1),
         }
 
         for player in shoot_players:
@@ -140,8 +155,8 @@ class DoShot2(namedtuple('_DoShot2', ['player'])):
     def prompt(self, players):
 
         shoot_players = {
-            players[(self.player.player_no - 3) % (NO_OF_PLAYERS - 1)],
-            players[(self.player.player_no + 1) % (NO_OF_PLAYERS - 1)],
+            clockwise_player(players, self.player, 2),
+            counterclockwise_player(players, self.player, 2),
         }
         for player in shoot_players:
             print("({}) player {}".format(player.player_no, player))

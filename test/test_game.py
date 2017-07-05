@@ -64,5 +64,29 @@ class TestGame(TestCase):
             self.players
         )
 
+class TestGame1v1(TestCase):
+    def setUp(self):
+        game = Game()
+        if not game.num_players:
+            game = AddPlayer(2).apply(game)
+        self.game = game
+        self.players = self.game.players
+        self.player = self.game.next_player
+
+    def tearDown(self):
+        self.game = None
+        self.players = None
+        self.player = None
+
+    @patch('game.DoShot2.get_response', side_effect=['1', '2'])
+    def test_do_shot2_not_self_in_1v1(self, get_response):
+        player2 = GetPlayer(self.players).apply(2)
+
+        self.assertEqual(
+            DoShot2(self.player).prompt(self.players),
+            UpdatePlayers(self.players, player2._replace(life=7)).apply()
+        )
+        self.assertEqual(get_response.call_count, 2)
+
 if __name__ == '__main__':
     unittest.main()
