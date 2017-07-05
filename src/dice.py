@@ -37,6 +37,13 @@ class Dice(namedtuple('_Dice', ['dice'])):
     def add(self, roll):
         return self.dice + (roll,)
 
+    def resolve(self, type):
+        return self.add(self.current_roll.replace(type, '', 1))
+
+    def check_resolve(self, type):
+        c_current_roll = Counter(self.current_roll)
+        return c_current_roll[type]
+
     def arrows(self):
         c_current_roll = Counter(self.current_roll)
         return c_current_roll[str(Die.ARROW.value)]
@@ -132,6 +139,6 @@ class TurnRoll(namedtuple('_TurnRoll', ['players', 'player'])):
         player = GetPlayer(players).apply(int(self.player.player_no))
 
         if Dice(dice).blown_up():
-            if LoseLife(player).validate(1):
-                return LoseLife(player).apply(1)
+            if LoseLife(players, player).validate(player, 1):
+                return LoseLife(players, player).apply(1)
         return players

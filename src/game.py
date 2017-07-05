@@ -1,7 +1,7 @@
 from collections import namedtuple
 
 from bang_types import MAX_ARROWS, NO_OF_PLAYERS
-from dice import Die
+from dice import Die, Dice
 from player import (
     LoseLife,
     RemoveArrow,
@@ -41,32 +41,30 @@ Game.__new__.__defaults__ = ([], [])
 class OfferActions(namedtuple('_OfferActions', ['players', 'player'])):
     def apply(self, dice):
         while sum(self.can_resolve(dice)):
+            players = self.players
             resolve = self.prompt(dice)
 
             if resolve == str(Die.BEER.value):
-                DoBeer(self.player).prompt(self.players)
-                dice = dice.replace(resolve, '', 1)
-
+                players = DoBeer(self.player).prompt(players)
             elif resolve == str(Die.SHOT1.value):
-                DoShot1(self.player).prompt(self.players)
-                dice = dice.replace(resolve, '', 1)
-
+                players = DoShot1(self.player).prompt(players)
             elif resolve == str(Die.SHOT2.value):
-                DoShot2(self.player).prompt(self.players)
-                dice = dice.replace(resolve, '', 1)
-
+                players = DoShot2(self.player).prompt(players)
             elif resolve == str(Die.GATLING.value):
-                DoGatlings(self.player).prompt(self.players)
-                dice = dice.replace(resolve, '', 1)
+                players = DoGatlings(self.player).prompt(players)
+
+            dice = Dice(dice).resolve(resolve)
 
             PrintAllPlayers().apply(self.players)
 
+        return players
+
     @staticmethod
     def can_resolve(dice):
-        beers = dice.count(str(Die.BEER.value))
-        shot1 = dice.count(str(Die.SHOT1.value))
-        shot2 = dice.count(str(Die.SHOT2.value))
-        gatlings = dice.count(str(Die.GATLING.value)) // 3
+        beers = Dice(dice).check_resolve(str(Die.BEER.value))
+        shot1 = Dice(dice).check_resolve(str(Die.SHOT1.value))
+        shot2 = Dice(dice).check_resolve(str(Die.SHOT2.value))
+        gatlings = Dice(dice).check_resolve(str(Die.GATLING.value)) // 3
 
         return beers, shot1, shot2, gatlings
 
@@ -89,56 +87,74 @@ class OfferActions(namedtuple('_OfferActions', ['players', 'player'])):
 
 
 class DoBeer(namedtuple('_DoBeer', ['player'])):
-    @staticmethod
-    def prompt(players):
+    def prompt(self, players):
         for player in players:
             print("({}) player {}".format(player.player_no, player))
 
         while True:
-            player_no = input("Which player would you like to beer?")
+            player_no = self.get_response()
             player = GetPlayer(players).apply(int(player_no))
 
-            if GainLife(player).validate(1):
-                GainLife(player).apply(1)
+            if GainLife(players, player).validate(player, 1):
+                players = GainLife(players, player).apply(1)
+                break
+
+        return players
+
+    @staticmethod
+    def get_response():
+        return input("Which player would you like to beer?")
 
 
 class DoShot1(namedtuple('_DoShot1', ['player'])):
     def prompt(self, players):
 
         shoot_players = (
-            players[(self.player.player_no - 1) % NO_OF_PLAYERS],
-            players[(self.player.player_no + 1) % NO_OF_PLAYERS],
+            players[(self.player.player_no - 1) % (NO_OF_PLAYERS - 1)],
+            players[(self.player.player_no + 1) % (NO_OF_PLAYERS - 1)],
         )
 
         for player in shoot_players:
             print("({}) player {}".format(player.player_no, player))
 
         while True:
-            player_no = input("Which player would you like to shoot?")
+            player_no = self.get_response()
             player = GetPlayer(players).apply(int(player_no))
 
-            if LoseLife(player).validate(1):
-                LoseLife(player).apply(1)
+            if LoseLife(players, player).validate(player, 1):
+                players = LoseLife(players, player).apply(1)
                 break
+
+        return players
+
+    @staticmethod
+    def get_response():
+        return input("Which player would you like to shoot?")
 
 
 class DoShot2(namedtuple('_DoShot2', ['player'])):
     def prompt(self, players):
 
         shoot_players = (
-            players[(self.player.player_no - 2) % NO_OF_PLAYERS],
-            players[(self.player.player_no + 2) % NO_OF_PLAYERS],
+            players[(self.player.player_no - 2) % (NO_OF_PLAYERS - 1)],
+            players[(self.player.player_no + 2) % (NO_OF_PLAYERS - 1)],
         )
         for player in shoot_players:
             print("({}) player {}".format(player.player_no, player))
 
         while True:
-            player_no = input("Which player would you like to shoot?")
+            player_no = self.get_response()
             player = GetPlayer(players).apply(int(player_no))
 
-            if LoseLife(player).validate(1):
-                LoseLife(player).apply(1)
+            if LoseLife(player, player).validate(player, 1):
+                players = LoseLife(players, player).apply(1)
                 break
+
+        return players
+
+    @staticmethod
+    def get_response():
+        return input("Which player would you like to shoot?")
 
 
 class DoGatlings(namedtuple('_DoGatlings', ['player'])):
@@ -146,14 +162,14 @@ class DoGatlings(namedtuple('_DoGatlings', ['player'])):
 
         for player in players:
             if player != self.player.player_no:
-                LoseLife(player).apply(1)
+                players = LoseLife(player, player).apply(1)
             else:
-                RemoveArrow(player).apply(MAX_ARROWS)
+                players = RemoveArrow(players, player).apply(MAX_ARROWS)
 
-        return input("Which player would you like to shoot?")
+        return players
 
     def prompt(self, players):
-        pass
+        return self.apply(players)
 
 
 class ResolveArrows(namedtuple('_ResolveArrows', ['players'])):
