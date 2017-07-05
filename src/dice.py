@@ -66,7 +66,7 @@ class Dice(namedtuple('_Dice', ['dice'])):
 Dice.__new__.__defaults__ = ((),)
 
 
-class TurnRoll(namedtuple('_RollDice', ['players', 'player'])):
+class TurnRoll(namedtuple('_TurnRoll', ['players', 'player'])):
     def apply(self):
         dice = ()
         players = self.players
@@ -82,7 +82,7 @@ class TurnRoll(namedtuple('_RollDice', ['players', 'player'])):
 
             players = self.check_arrows(dice, players)
             players = self.check_blown_up(dice, players)
-            if len(Dice(dice)) == NO_OF_DICE:
+            if len(dice) < 3 + (2*reroll):
                 # if no dice have been rerolled
                 break
 
@@ -97,9 +97,11 @@ class TurnRoll(namedtuple('_RollDice', ['players', 'player'])):
 
             if not self.validate(dice, reroll):
                 print("Invalid choice. Try again.")
-            else:
+            elif reroll:
                 dice = Dice(dice).pick_reroll(reroll)
                 dice = Dice(dice).roll()
+                break
+            else:
                 break
 
         return dice
@@ -132,4 +134,4 @@ class TurnRoll(namedtuple('_RollDice', ['players', 'player'])):
         if Dice(dice).blown_up():
             if LoseLife(player).validate(1):
                 return LoseLife(player).apply(1)
-        return player
+        return players
