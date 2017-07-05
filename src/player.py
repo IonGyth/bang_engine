@@ -6,14 +6,14 @@ from bang_types import MAX_HEALTH, MAX_ARROWS
 
 
 class Role(Enum):
-    SHERRIF = 0
+    SHERIFF = 0
     VICE = 1
     RENEGADE = 2
     OUTLAW = 3
 
 
 add_which_role = {
-    1: Role.SHERRIF,
+    1: Role.SHERIFF,
     2: Role.RENEGADE,
     3: Role.OUTLAW,
     4: Role.OUTLAW,
@@ -82,14 +82,14 @@ class CheckGameEnd(object):
 
         if (
             not (alive_roles[Role.OUTLAW] + alive_roles[Role.RENEGADE]) and
-            alive_roles[Role.SHERRIF]
+            alive_roles[Role.SHERIFF]
         ):
-            print("SHERRIF WINS")
-            return Role.SHERRIF
+            print("SHERIFF WINS")
+            return Role.SHERIFF
         elif (
                 alive_roles[Role.RENEGADE] == 1 and
             not (
-                alive_roles[Role.SHERRIF] +
+                alive_roles[Role.SHERIFF] +
                 alive_roles[Role.VICE] +
                 alive_roles[Role.OUTLAW]
             )
@@ -97,7 +97,7 @@ class CheckGameEnd(object):
             print("RENEGADE WIN")
             return Role.RENEGADE
         elif (
-            not (alive_roles[Role.SHERRIF]) and
+            not (alive_roles[Role.SHERIFF]) and
                 alive_roles[Role.RENEGADE] != 1
         ):
             print("OUTLAW_WIN")

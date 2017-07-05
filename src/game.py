@@ -17,11 +17,11 @@ class Game(namedtuple('_Game', ['players', 'moves'])):
     def next_player(self):
         if not self.moves:
             for player in self.players:
-                if player.role == Role.SHERRIF:
-                    sherrif = player
+                if player.role == Role.SHERIFF:
+                    sheriff = player
                     break
 
-            player_index = self.players.index(sherrif)
+            player_index = self.players.index(sheriff)
             return self.players[player_index % NO_OF_PLAYERS]
 
         last_move = self.moves[-1]
