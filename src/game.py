@@ -95,7 +95,7 @@ class DoBeer(namedtuple('_DoBeer', ['player'])):
             player_no = self.get_response()
             player = GetPlayer(players).apply(int(player_no))
 
-            if GainLife(players, player).validate(player, 1):
+            if GainLife(players, player).isvalid(player, 1):
                 players = GainLife(players, player).apply(1)
                 break
 
@@ -121,7 +121,7 @@ class DoShot1(namedtuple('_DoShot1', ['player'])):
             player_no = self.get_response()
             player = GetPlayer(players).apply(int(player_no))
 
-            if LoseLife(players, player).validate(player, 1):
+            if LoseLife(players, player).isvalid(player, 1):
                 players = LoseLife(players, player).apply(1)
                 break
 
@@ -146,7 +146,7 @@ class DoShot2(namedtuple('_DoShot2', ['player'])):
             player_no = self.get_response()
             player = GetPlayer(players).apply(int(player_no))
 
-            if LoseLife(player, player).validate(player, 1):
+            if LoseLife(player, player).isvalid(player, 1):
                 players = LoseLife(players, player).apply(1)
                 break
 
@@ -177,7 +177,7 @@ class ResolveArrows(namedtuple('_ResolveArrows', ['players'])):
         for player in self.players:
             ResolveArrows(player).apply()
 
-    def validate(self):
+    def isvalid(self):
         no_of_arrows = 0
         for player in self.players:
             no_of_arrows += player.arrows

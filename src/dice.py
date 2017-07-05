@@ -102,7 +102,7 @@ class TurnRoll(namedtuple('_TurnRoll', ['players', 'player'])):
             reroll_hint = ', '.join(['{}={}'.format(die.value, die.name) for die in Die])
             reroll = input("Reroll what? " + reroll_hint)
 
-            if not self.validate(dice, reroll):
+            if not self.isvalid(dice, reroll):
                 print("Invalid choice. Try again.")
             elif reroll:
                 dice = Dice(dice).pick_reroll(reroll)
@@ -114,7 +114,7 @@ class TurnRoll(namedtuple('_TurnRoll', ['players', 'player'])):
         return dice
 
     @staticmethod
-    def validate(dice, reroll):
+    def isvalid(dice, reroll):
         """
         Validate the dice we have been told to reroll
 
@@ -139,6 +139,6 @@ class TurnRoll(namedtuple('_TurnRoll', ['players', 'player'])):
         player = GetPlayer(players).apply(int(self.player.player_no))
 
         if Dice(dice).blown_up():
-            if LoseLife(players, player).validate(player, 1):
+            if LoseLife(players, player).isvalid(player, 1):
                 return LoseLife(players, player).apply(1)
         return players
