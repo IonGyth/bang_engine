@@ -1,0 +1,66 @@
+#voteContainer
+{
+
+   text-align: center;
+}
+#voteContainer > div
+{
+   display: inline-block;
+}
+#voteContainer > div > img
+{
+  box-shadow: 0 0 2px 2px rgba(0, 0, 0, 0.3);
+}
+
+#voteContainer > div > span
+{
+    display: block;
+
+    margin: 1em 0 0;
+    font-size: 21px;
+    text-shadow: 0 0 2px rgba(0, 0, 0, 0.2);
+}
+
+#voteContainer > div > div
+{
+    display: inline-block;
+
+
+}
+#voteContainer > div > div > input
+{
+
+    width: 4em;
+    text-align: center;
+    border: none;
+    background-color: #fafafa;
+    font-size: 4em;
+    padding: 20px 0 30px;
+
+    transition: all 0.3s ease;
+    text-shadow: 0 0 7px rgba(0, 0, 0, 0.2);
+}
+
+
+#voteContainer > div > button
+{
+
+}
+
+button
+{
+    background-color: #D4D0C8;
+
+    border: 1px solid rgb(196, 191, 181);
+    padding: 0.5em 1em;
+    font-size: 20px;
+    font-weight: normal;
+    text-shadow: 0 0 4px rgba(0, 0, 0, 0.3), -1px 0 1px rgba(255, 255, 255, 0.5);
+    box-shadow: 0 0 8px 1px rgba(0, 0, 0, 0.3);
+}
+button:hover
+{
+    background-color: rgb(196, 188, 173);
+
+    box-shadow: 0 0 8px 2px rgba(0, 0, 0, 0.4);
+}

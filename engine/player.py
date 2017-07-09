@@ -28,21 +28,26 @@ class Player(namedtuple('_Player', ['player_no', 'life', 'arrows', 'role'])):
     def __str__(self):
         return "Player {} hp:{} ap:{}".format(self.player_no, self.life, self.arrows)
 
+    def to_dict(self):
+        return dict(
+            life=self.life,
+            arrows=self.arrows,
+            role=self.role.name,
+        )
 
 Player.__new__.__defaults__ = (None, 8, 0, None)
 
 
 class AddPlayer(namedtuple('_AddPlayer', ['num'])):
     def apply(self, game):
-        for _ in range(0, self.num):
-            if self.isvalid(game):
+        if self.isvalid(game):
+            for _ in range(0, self.num):
                 player_no = game.num_players + 1
                 new_role = add_which_role[player_no]
 
                 game.players.append(Player(player_no=player_no, role=new_role))
-            else:
-                print("Can't add more players to the game!")
-                break
+        else:
+            print("Can't add more players to the game!")
 
         return game
 

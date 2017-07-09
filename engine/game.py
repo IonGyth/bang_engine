@@ -14,7 +14,7 @@ from player import (
 
 class Game(namedtuple('_Game', ['players', 'moves'])):
     def __new__(cls, players=None, moves=None):
-        return super(Game, cls).__new__(cls, players or [], moves or [])
+        return super(Game, cls).__new__(cls, players or []  , moves or [])
 
     @property
     def next_player(self):
@@ -35,6 +35,12 @@ class Game(namedtuple('_Game', ['players', 'moves'])):
     def num_players(self):
         return len(self.players)
 
+    def to_dict(self):
+        return dict(
+            players=[{p.player_no: p.to_dict()} for p in self.players],
+            moves=[]
+        )
+
 
 def clockwise_player(players, player, n):
     i = players.index(player)
@@ -43,6 +49,7 @@ def clockwise_player(players, player, n):
         if players[i] is not player:
             n -= 1
     return players[i]
+
 
 def counterclockwise_player(players, player, n):
     i = players.index(player)
