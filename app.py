@@ -91,7 +91,7 @@ def start_game():
     game = AddPlayer(5).apply(game)
     game = ShufflePlayers().apply(game)
 
-    send(game.to_dict(), json=True)
+    emit('start_game', game.to_dict(), json=True)
 
 
 @socketio.on('push_players')
@@ -99,7 +99,7 @@ def push_players(players):
     json_players = [{p.player_no: p.to_dict()} for p in players]
 
     logger.info('Pushing players')
-    send(json_players, json=True)
+    emit('push_players', json_players, json=True)
 
 
 @socketio.on('my event')

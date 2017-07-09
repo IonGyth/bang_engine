@@ -63,7 +63,7 @@ $(document).ready(function() {
     window.setInterval(function() {
         start_time = (new Date).getTime();
         socket.emit('my_ping');
-    }, 1000);
+    }, 10000);
 
     // These accept data from the user and send it to the server in a
     // variety of ways
@@ -84,10 +84,26 @@ $(document).ready(function() {
         socket.emit('start_game');
     });
     socket.on('push_players', function(players) {
-        return players.each(function(player) {
+        return players.each(function(idx, player) {
         $('<div/>').text('Player ' + player['player_no'] + ' ' + player['role'] +
         ' : hp = ' + player['hp'] +
         ' ,ap = ' + player['arrows'])
+        });
+    });
+    socket.on('start_game', function(   game) {
+        var player_container = $("#playerContainer");
+        var players = game['players']
+        player_container.text('');
+
+        return $.each(players, function(idx, player) {
+            for (var player_no in player){
+                player = player[player_no]
+                player_container.append(
+                    $("<div />").text('Player ' + player_no + ' ' + player.role +
+                    ' : hp = ' + player.life +
+                    ' ,ap = ' + player.arrows)
+                );
+            }
         });
     });
 
