@@ -101,10 +101,5 @@ def push_players(players):
     emit('push_players', json_players, json=True)
 
 
-@socketio.on('my event')
-def respondToRequest(message):
-    logger.info('responding to request')
-    emit('my response',{'data':'some response'})
-
 if __name__ == '__main__':
     socketio.run(app, debug=True, port=12000)
