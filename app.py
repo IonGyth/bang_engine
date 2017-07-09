@@ -74,7 +74,6 @@ class RedisSessionInterface(SessionInterface):
 
 
 app = Flask(__name__)
-app.session_interface = RedisSessionInterface()
 app.config['SECRET_KEY'] = 'secret!'
 socketio = SocketIO(app)
 
