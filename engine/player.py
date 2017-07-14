@@ -1,7 +1,6 @@
 from collections import Counter
 from enum import Enum
-from random import shuffle
-from typing import NamedTuple, Tuple
+from typing import NamedTuple, Tuple, List
 
 from bang_types import MAX_HEALTH, MAX_ARROWS
 
@@ -16,18 +15,6 @@ class Role(Enum):
     VICE = 1
     RENEGADE = 2
     OUTLAW = 3
-
-
-add_which_role = {
-    1: Role.SHERIFF,
-    2: Role.RENEGADE,
-    3: Role.OUTLAW,
-    4: Role.OUTLAW,
-    5: Role.VICE,
-    6: Role.OUTLAW,
-    7: Role.VICE,
-    8: Role.RENEGADE,
-}
 
 
 class _Player(NamedTuple):
@@ -49,65 +36,25 @@ class Player(_Player):
         )
 
 
-class _AddPlayer(NamedTuple):
-    num: int
-
-
-class AddPlayer(_AddPlayer):
-    def apply(self, game):
-        """
-        This is used to add a new player to the game
-
-        :param game: add the player to this game
-        :return: the game with the added player
-        """
-        if self.isvalid(game):
-            for _ in range(0, self.num):
-                player_no = game.num_players + 1
-                new_role = add_which_role[player_no]
-
-                game.players.append(Player(player_no=player_no, role=new_role))
-        else:
-            logger.debug("Can't add more players to the game!")
-
-        return game
-
-    def isvalid(self, game):
-        return game.num_players + self.num <= max(add_which_role.keys())
-
-
-class ShufflePlayers(object):
-    @staticmethod
-    def apply(game):
-        """
-        Shuffle the players in the game
-        :param game: shuffle the players in the game
-        :return: the game with the players shuffled
-        """
-        shuffle(game.players)
-
-        return game
-
-
 class PrintAllPlayers(object):
     @staticmethod
-    def apply(players):
+    def apply(players: List[Player]):
         for player in players:
             logger.debug(player)
 
 
 class PrintPlayer(object):
     @staticmethod
-    def apply(player):
+    def apply(player: Player):
         logger.debug(player)
 
 
 class CheckGameEnd(object):
-    def apply(self, players):
+    def apply(self, players: List[Player]):
         return self.prompt(players)
 
     @staticmethod
-    def prompt(players):
+    def prompt(players: List[Player]) -> Role:
         alive_roles = [player.role for player in players if player.life >= 0]
         alive_roles = Counter(alive_roles)
 
@@ -142,7 +89,7 @@ class _GetPlayer(NamedTuple):
 
 
 class GetPlayer(_GetPlayer):
-    def apply(self, player_no):
+    def apply(self, player_no: int) -> Player:
         for player in self.players:
             if player.player_no == player_no:
                 return player
@@ -154,7 +101,7 @@ class _UpdatePlayer(NamedTuple):
 
 
 class UpdatePlayers(_UpdatePlayer):
-    def apply(self):
+    def apply(self) -> List[Player]:
         return [player if player.player_no != self.player.player_no else self.player for player in self.players]
 
 
@@ -164,7 +111,7 @@ class _ResolveArrows(NamedTuple):
 
 
 class ResolveArrows(_ResolveArrows):
-    def apply(self):
+    def apply(self) -> Player:
         new_life = self.player.life - self.player.arrows
         player = self.player._replace(life=new_life)
         player = player._replace(arrows=0)
@@ -178,7 +125,7 @@ class _TakeArrow(NamedTuple):
 
 
 class TakeArrow(_TakeArrow):
-    def apply(self, quantity):
+    def apply(self, quantity: int) -> List[Player]:
         players = self.players
         player = GetPlayer(players).apply(int(self.player.player_no))
 
@@ -191,7 +138,7 @@ class TakeArrow(_TakeArrow):
         return UpdatePlayers(players, player).apply()
 
     @staticmethod
-    def check_resolve(players):
+    def check_resolve(players: List[Player]) -> bool:
         no_of_arrows = 0
         for player in players:
             no_of_arrows += player.arrows
@@ -205,7 +152,7 @@ class _RemoveArrow(NamedTuple):
 
 
 class RemoveArrow(_RemoveArrow):
-    def apply(self, quantity):
+    def apply(self, quantity: int) -> List[Player]:
         players = self.players
         player = GetPlayer(players).apply(int(self.player.player_no))
 
@@ -218,7 +165,7 @@ class RemoveArrow(_RemoveArrow):
         return UpdatePlayers(players, player).apply()
 
     @staticmethod
-    def isvalid(player, quantity):
+    def isvalid(player, quantity: int) -> bool:
         return player.arrows - quantity >= 0
 
 
@@ -228,7 +175,7 @@ class _LoseLife(NamedTuple):
 
 
 class LoseLife(_LoseLife):
-    def apply(self, quantity):
+    def apply(self, quantity: int) -> List[Player]:
         players = self.players
         player = GetPlayer(players).apply(int(self.player.player_no))
 
@@ -241,7 +188,7 @@ class LoseLife(_LoseLife):
         return UpdatePlayers(players, player).apply()
 
     @staticmethod
-    def isvalid(player, quantity):
+    def isvalid(player: Player, quantity: int) -> bool:
         return player.life - quantity >= 0
 
 
@@ -251,7 +198,7 @@ class _GainLife(NamedTuple):
 
 
 class GainLife(_GainLife):
-    def apply(self, quantity):
+    def apply(self, quantity: int) -> List[Player]:
         players = self.players
         player = GetPlayer(players).apply(int(self.player.player_no))
 
@@ -264,7 +211,7 @@ class GainLife(_GainLife):
         return UpdatePlayers(players, player).apply()
 
     @staticmethod
-    def isvalid(player, quantity):
+    def isvalid(player: Player, quantity: int) -> bool:
         return player.life + quantity <= MAX_HEALTH
 
 
@@ -274,7 +221,7 @@ class _BlowUp(NamedTuple):
 
 
 class BlowUp(_BlowUp):
-    def apply(self, quantity):
+    def apply(self, quantity: int) -> List[Player]:
         players = self.players
         player = GetPlayer(players).apply(int(self.player.player_no))
 

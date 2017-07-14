@@ -42,7 +42,7 @@ class Dice(_Dice):
         return len(self.current_roll)
 
     @property
-    def current_roll(self):
+    def current_roll(self) -> ():
         """
         Get the current state of the dice
 
@@ -50,7 +50,7 @@ class Dice(_Dice):
         """
         return self.dice[-1] if len(self.dice) else ''
 
-    def add(self, roll):
+    def add(self, roll: ()) -> ():
         """
         Add a roll to the history of rolls
 
@@ -59,7 +59,7 @@ class Dice(_Dice):
         """
         return self.dice + (roll,)
 
-    def resolve(self, type):
+    def resolve(self, type) -> ():
         """
         Remove a single dice from the pool of rolled dice.
         This is probably because that die has been resolved.
@@ -69,7 +69,7 @@ class Dice(_Dice):
         """
         return self.add(self.current_roll.replace(type, '', 1))
 
-    def check_resolve(self, type):
+    def check_resolve(self, type: Die) -> int:
         """
         Check how many of a certain type of die can be resolved
 
@@ -79,22 +79,22 @@ class Dice(_Dice):
         c_current_roll = Counter(self.current_roll)
         return c_current_roll[type]
 
-    def arrows(self):
+    def arrows(self) -> int:
         c_current_roll = Counter(self.current_roll)
         return c_current_roll[str(Die.ARROW.value)]
 
-    def dynamites(self):
+    def dynamites(self) -> int:
         c_current_roll = Counter(self.current_roll)
         return c_current_roll[str(Die.DYNAMITE.value)]
 
-    def blown_up(self):
+    def blown_up(self) -> bool:
         """
         Check if the player should have blown up.
         :return: 1 if the player has blown up else 0
         """
         return self.dynamites() // 3
 
-    def roll(self):
+    def roll(self) -> ():
         """
         Roll the unwanted dice
 
@@ -106,14 +106,14 @@ class Dice(_Dice):
 
         return self.add(self.current_roll + roll)
 
-    def pick_reroll(self, reroll):
+    def pick_reroll(self, reroll: str) -> ():
         current_roll = self.current_roll
         for num in list(reroll):
             current_roll = current_roll.replace(num, '')
 
         return self.add(current_roll)
 
-    def to_dict(self):
+    def to_dict(self) -> dict:
         """
         Return a dict of the current state of the dice.
 
@@ -150,7 +150,7 @@ class TurnRoll(_TurnRoll):
 
         return dice, players
 
-    def reroll(self, dice):
+    def reroll(self, dice: ()) -> ():
         while True:
             logger.debug(Dice(dice))
 
@@ -169,7 +169,7 @@ class TurnRoll(_TurnRoll):
         return dice
 
     @staticmethod
-    def isvalid(dice, reroll):
+    def isvalid(dice: (), reroll: ()) -> bool:
         """
         Validate the dice we have been told to reroll
 
@@ -185,12 +185,12 @@ class TurnRoll(_TurnRoll):
             and all([c_dice[dice] >= num for dice, num in c_reroll.most_common()])
         )
 
-    def check_arrows(self, dice, players):
+    def check_arrows(self, dice: (), players: List[Player]) -> List[Player]:
         player = GetPlayer(players).apply(int(self.player.player_no))
 
         return TakeArrow(self.players, player).apply(Dice(dice).arrows())
 
-    def check_blown_up(self, dice, players):
+    def check_blown_up(self, dice: (), players: List[Player]) -> List[Player]:
         player = GetPlayer(players).apply(int(self.player.player_no))
 
         if Dice(dice).blown_up():

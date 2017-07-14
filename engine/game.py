@@ -1,4 +1,5 @@
-from typing import NamedTuple, Tuple
+from random import shuffle
+from typing import NamedTuple, Tuple, List
 
 from bang_types import MAX_ARROWS, NO_OF_PLAYERS
 from dice import Die, Dice
@@ -16,6 +17,18 @@ import daiquiri
 
 daiquiri.setup()
 logger = daiquiri.getLogger()
+
+add_which_role = {
+    1: Role.SHERIFF,
+    2: Role.RENEGADE,
+    3: Role.OUTLAW,
+    4: Role.OUTLAW,
+    5: Role.VICE,
+    6: Role.OUTLAW,
+    7: Role.VICE,
+    8: Role.RENEGADE,
+}
+
 
 class _Game(NamedTuple):
     players: Tuple[Player] = ()
@@ -52,7 +65,7 @@ class Game(_Game):
         )
 
 
-def clockwise_player(players, player, n):
+def clockwise_player(players: List[Player], player: Player, n: int) -> Player:
     i = players.index(player)
     while n:
         i = (i + 1) % len(players)
@@ -61,7 +74,7 @@ def clockwise_player(players, player, n):
     return players[i]
 
 
-def counterclockwise_player(players, player, n):
+def counterclockwise_player(players: List[Player], player: Player, n: int) -> Player:
     i = players.index(player)
     while n:
         i = (i - 1 if i > 0 else len(players) - 1) % len(players)
@@ -70,13 +83,53 @@ def counterclockwise_player(players, player, n):
     return players[i]
 
 
+class _AddPlayer(NamedTuple):
+    num: int
+
+
+class AddPlayer(_AddPlayer):
+    def apply(self, game: Game) -> Game:
+        """
+        This is used to add a new player to the game
+
+        :param game: add the player to this game
+        :return: the game with the added player
+        """
+        if self.isvalid(game):
+            for _ in range(0, self.num):
+                player_no = game.num_players + 1
+                new_role = add_which_role[player_no]
+
+                game.players.append(Player(player_no=player_no, role=new_role))
+        else:
+            logger.debug("Can't add more players to the game!")
+
+        return game
+
+    def isvalid(self, game: Game) -> bool:
+        return game.num_players + self.num <= max(add_which_role.keys())
+
+
+class ShufflePlayers(object):
+    @staticmethod
+    def apply(game: Game) -> Game:
+        """
+        Shuffle the players in the game
+        :param game: shuffle the players in the game
+        :return: the game with the players shuffled
+        """
+        shuffle(game.players)
+
+        return game
+
+
 class _OfferActions(NamedTuple):
     players: Tuple[Player] = ()
     player: Player = None
 
 
 class OfferActions(_OfferActions):
-    def apply(self, dice):
+    def apply(self, dice: ()) -> List[Player]:
         while sum(self.can_resolve(dice)):
             players = self.players
             resolve = self.prompt(dice)
@@ -97,7 +150,7 @@ class OfferActions(_OfferActions):
         return players
 
     @staticmethod
-    def can_resolve(dice):
+    def can_resolve(dice: ()):
         beers = Dice(dice).check_resolve(str(Die.BEER.value))
         shot1 = Dice(dice).check_resolve(str(Die.SHOT1.value))
         shot2 = Dice(dice).check_resolve(str(Die.SHOT2.value))
@@ -105,7 +158,7 @@ class OfferActions(_OfferActions):
 
         return beers, shot1, shot2, gatlings
 
-    def prompt(self, dice):
+    def prompt(self, dice: ()):
         beers, shot1, shot2, gatlings = self.can_resolve(dice)
 
         if beers:
@@ -128,7 +181,7 @@ class _DoBeer(NamedTuple):
 
 
 class DoBeer(_DoBeer):
-    def prompt(self, players):
+    def prompt(self, players: List[Player]) -> List[Player]:
         for player in players:
             logger.debug("({}) player {}".format(player.player_no, player))
 
@@ -152,7 +205,7 @@ class _DoShot1(NamedTuple):
 
 
 class DoShot1(_DoShot1):
-    def prompt(self, players):
+    def prompt(self, players: List[Player]) -> List[Player]:
 
         shoot_players = {
             clockwise_player(players, self.player, 1),
@@ -186,7 +239,7 @@ class _DoShot2(NamedTuple):
 
 
 class DoShot2(_DoShot2):
-    def prompt(self, players):
+    def prompt(self, players: List[Player]) -> List[Player]:
 
         shoot_players = {
             clockwise_player(players, self.player, 2),
@@ -219,7 +272,7 @@ class _DoGatlings(NamedTuple):
 
 
 class DoGatlings(_DoGatlings):
-    def apply(self, players):
+    def apply(self, players: List[Player]) -> List[Player]:
 
         for player in players:
             if player != self.player.player_no:

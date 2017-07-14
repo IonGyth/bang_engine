@@ -3,10 +3,8 @@ from unittest import (
     TestCase,
 )
 
-from game import Game
+from game import Game, AddPlayer, ShufflePlayers
 from player import (
-    AddPlayer,
-    ShufflePlayers,
     GetPlayer,
     TakeArrow,
     UpdatePlayers,
