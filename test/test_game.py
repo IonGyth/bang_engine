@@ -7,7 +7,9 @@ from unittest.mock import patch
 from game import Game, DoBeer, DoShot1, DoShot2
 from player import (
     AddPlayer,
-    UpdatePlayers, GetPlayer)
+    UpdatePlayers,
+    GetPlayer,
+)
 
 
 class TestGame(TestCase):

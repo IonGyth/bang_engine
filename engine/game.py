@@ -1,4 +1,4 @@
-from collections import namedtuple
+from typing import NamedTuple, Tuple
 
 from bang_types import MAX_ARROWS, NO_OF_PLAYERS
 from dice import Die, Dice
@@ -9,10 +9,20 @@ from player import (
     Role,
     GetPlayer,
     PrintAllPlayers,
+    Player,
 )
 
+import daiquiri
 
-class Game(namedtuple('_Game', ['players', 'moves'])):
+daiquiri.setup()
+logger = daiquiri.getLogger()
+
+class _Game(NamedTuple):
+    players: Tuple[Player] = ()
+    moves: tuple = ()
+
+
+class Game(_Game):
     def __new__(cls, players=None, moves=None):
         return super(Game, cls).__new__(cls, players or []  , moves or [])
 
@@ -60,7 +70,12 @@ def counterclockwise_player(players, player, n):
     return players[i]
 
 
-class OfferActions(namedtuple('_OfferActions', ['players', 'player'])):
+class _OfferActions(NamedTuple):
+    players: Tuple[Player] = ()
+    player: Player = None
+
+
+class OfferActions(_OfferActions):
     def apply(self, dice):
         while sum(self.can_resolve(dice)):
             players = self.players
@@ -94,24 +109,28 @@ class OfferActions(namedtuple('_OfferActions', ['players', 'player'])):
         beers, shot1, shot2, gatlings = self.can_resolve(dice)
 
         if beers:
-            print('(0) You have rolled {} beers'.format(beers))
+            logger.debug('(0) You have rolled {} beers'.format(beers))
 
         if shot1:
-            print('(1) You have rolled {} 1shots'.format(shot1))
+            logger.debug('(1) You have rolled {} 1shots'.format(shot1))
 
         if shot2:
-            print('(2) You have rolled {} 2shots'.format(shot2))
+            logger.debug('(2) You have rolled {} 2shots'.format(shot2))
 
         if gatlings:
-            print('(3) You have rolled {} gatlings'.format(beers))
+            logger.debug('(3) You have rolled {} gatlings'.format(beers))
 
         return input("Which would you like to resolve? ")
 
 
-class DoBeer(namedtuple('_DoBeer', ['player'])):
+class _DoBeer(NamedTuple):
+    player: Player
+
+
+class DoBeer(_DoBeer):
     def prompt(self, players):
         for player in players:
-            print("({}) player {}".format(player.player_no, player))
+            logger.debug("({}) player {}".format(player.player_no, player))
 
         while True:
             player_no = self.get_response()
@@ -128,7 +147,11 @@ class DoBeer(namedtuple('_DoBeer', ['player'])):
         return input("Which player would you like to beer?")
 
 
-class DoShot1(namedtuple('_DoShot1', ['player'])):
+class _DoShot1(NamedTuple):
+    player: Player
+
+
+class DoShot1(_DoShot1):
     def prompt(self, players):
 
         shoot_players = {
@@ -137,14 +160,14 @@ class DoShot1(namedtuple('_DoShot1', ['player'])):
         }
 
         for player in shoot_players:
-            print("({}) player {}".format(player.player_no, player))
+            logger.debug("({}) player {}".format(player.player_no, player))
 
         while True:
             player_no = self.get_response()
             player = GetPlayer(players).apply(int(player_no))
 
             if player not in shoot_players:
-                print("Invalid choice. Try again.")
+                logger.debug("Invalid choice. Try again.")
                 continue
 
             if LoseLife(players, player).isvalid(player, 1):
@@ -158,7 +181,11 @@ class DoShot1(namedtuple('_DoShot1', ['player'])):
         return input("Which player would you like to shoot?")
 
 
-class DoShot2(namedtuple('_DoShot2', ['player'])):
+class _DoShot2(NamedTuple):
+    player: Player
+
+
+class DoShot2(_DoShot2):
     def prompt(self, players):
 
         shoot_players = {
@@ -166,14 +193,14 @@ class DoShot2(namedtuple('_DoShot2', ['player'])):
             counterclockwise_player(players, self.player, 2),
         }
         for player in shoot_players:
-            print("({}) player {}".format(player.player_no, player))
+            logger.debug("({}) player {}".format(player.player_no, player))
 
         while True:
             player_no = self.get_response()
             player = GetPlayer(players).apply(int(player_no))
 
             if player not in shoot_players:
-                print("Invalid choice. Try again.")
+                logger.debug("Invalid choice. Try again.")
                 continue
 
             if LoseLife(player, player).isvalid(player, 1):
@@ -187,7 +214,11 @@ class DoShot2(namedtuple('_DoShot2', ['player'])):
         return input("Which player would you like to shoot?")
 
 
-class DoGatlings(namedtuple('_DoGatlings', ['player'])):
+class _DoGatlings(NamedTuple):
+    player: Player
+
+
+class DoGatlings(_DoGatlings):
     def apply(self, players):
 
         for player in players:
@@ -202,7 +233,11 @@ class DoGatlings(namedtuple('_DoGatlings', ['player'])):
         return self.apply(players)
 
 
-class ResolveArrows(namedtuple('_ResolveArrows', ['players'])):
+class _ResolveArrows(NamedTuple):
+    players: Tuple[Player]
+
+
+class ResolveArrows(_ResolveArrows):
     def apply(self):
         for player in self.players:
             ResolveArrows(player).apply()

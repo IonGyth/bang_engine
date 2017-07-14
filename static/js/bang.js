@@ -83,14 +83,10 @@ $(document).ready(function() {
     $( "Button.start_game" ).click( "start_game", function() {
         socket.emit('start_game');
     });
-    socket.on('push_players', function(players) {
-        return players.each(function(idx, player) {
-        $('<div/>').text('Player ' + player['player_no'] + ' ' + player['role'] +
-        ' : hp = ' + player['hp'] +
-        ' ,ap = ' + player['arrows'])
-        });
+    $( "Button#roll" ).click( "roll_dice", function() {
+        socket.emit('roll_dice');
     });
-    socket.on('start_game', function(   game) {
+    socket.on('start_game', function(game) {
         var player_container = $("#playerContainer");
         var players = game['players']
         player_container.text('');

@@ -1,6 +1,7 @@
 import random
-from collections import namedtuple, Counter
+from collections import Counter
 from enum import Enum
+from typing import NamedTuple, List
 
 from bang_types import (
     NO_OF_DICE,
@@ -11,7 +12,13 @@ from player import (
     GetPlayer,
     TakeArrow,
     LoseLife,
+    Player,
 )
+
+import daiquiri
+
+daiquiri.setup()
+logger = daiquiri.getLogger()
 
 
 class Die(Enum):
@@ -23,7 +30,11 @@ class Die(Enum):
     DYNAMITE = 5
 
 
-class Dice(namedtuple('_Dice', ['dice'])):
+class _Dice(NamedTuple):
+    dice: tuple = ()
+
+
+class Dice(_Dice):
     def __str__(self):
         return ' '.join([Die(int(die)).name for die in self.current_roll])
 
@@ -32,15 +43,39 @@ class Dice(namedtuple('_Dice', ['dice'])):
 
     @property
     def current_roll(self):
+        """
+        Get the current state of the dice
+
+        :return: dice roll
+        """
         return self.dice[-1] if len(self.dice) else ''
 
     def add(self, roll):
+        """
+        Add a roll to the history of rolls
+
+        :param roll: the roll to add
+        :return: the dice history
+        """
         return self.dice + (roll,)
 
     def resolve(self, type):
+        """
+        Remove a single dice from the pool of rolled dice.
+        This is probably because that die has been resolved.
+
+        :param type: type of die that has been resolved
+        :return: active dice that can be resolved.
+        """
         return self.add(self.current_roll.replace(type, '', 1))
 
     def check_resolve(self, type):
+        """
+        Check how many of a certain type of die can be resolved
+
+        :param type: type of die
+        :return: number of dice
+        """
         c_current_roll = Counter(self.current_roll)
         return c_current_roll[type]
 
@@ -53,9 +88,18 @@ class Dice(namedtuple('_Dice', ['dice'])):
         return c_current_roll[str(Die.DYNAMITE.value)]
 
     def blown_up(self):
+        """
+        Check if the player should have blown up.
+        :return: 1 if the player has blown up else 0
+        """
         return self.dynamites() // 3
 
     def roll(self):
+        """
+        Roll the unwanted dice
+
+        :return: dice history
+        """
         roll = ''
         for _ in range(len(self), NO_OF_DICE):
             roll += str(random.randint(0, SIDES_OF_DICE - 1))
@@ -69,16 +113,27 @@ class Dice(namedtuple('_Dice', ['dice'])):
 
         return self.add(current_roll)
 
+    def to_dict(self):
+        """
+        Return a dict of the current state of the dice.
 
-Dice.__new__.__defaults__ = ((),)
+        :return: dict of dice
+        """
+        c_current_roll = Counter(self.current_roll)
+        return {d.name: c_current_roll[str(d.value)] for d in Die}
 
 
-class TurnRoll(namedtuple('_TurnRoll', ['players', 'player'])):
+class _TurnRoll(NamedTuple):
+    players = List[Player]
+    player = Player
+
+
+class TurnRoll(_TurnRoll):
     def apply(self):
         dice = ()
         players = self.players
 
-        print("**** ROLLING ****")
+        logger.debug("**** ROLLING ****")
         dice = Dice(dice).roll()
 
         players = self.check_arrows(dice, players)
@@ -97,13 +152,13 @@ class TurnRoll(namedtuple('_TurnRoll', ['players', 'player'])):
 
     def reroll(self, dice):
         while True:
-            print(Dice(dice))
+            logger.debug(Dice(dice))
 
             reroll_hint = ', '.join(['{}={}'.format(die.value, die.name) for die in Die])
             reroll = input("Reroll what? " + reroll_hint)
 
             if not self.isvalid(dice, reroll):
-                print("Invalid choice. Try again.")
+                logger.debug("Invalid choice. Try again.")
             elif reroll:
                 dice = Dice(dice).pick_reroll(reroll)
                 dice = Dice(dice).roll()
