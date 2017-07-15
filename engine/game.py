@@ -1,5 +1,5 @@
 from random import shuffle
-from typing import NamedTuple, Tuple, List
+from typing import NamedTuple, Tuple
 
 from bang_types import MAX_ARROWS, NO_OF_PLAYERS
 from dice import Die, Dice
@@ -37,7 +37,7 @@ class _Game(NamedTuple):
 
 class Game(_Game):
     def __new__(cls, players=None, moves=None):
-        return super(Game, cls).__new__(cls, players or []  , moves or [])
+        return super(Game, cls).__new__(cls, players or [], moves or [])
 
     @property
     def next_player(self):
@@ -65,7 +65,7 @@ class Game(_Game):
         )
 
 
-def clockwise_player(players: List[Player], player: Player, n: int) -> Player:
+def clockwise_player(players: Tuple[Player, ...], player: Player, n: int) -> Player:
     i = players.index(player)
     while n:
         i = (i + 1) % len(players)
@@ -74,7 +74,7 @@ def clockwise_player(players: List[Player], player: Player, n: int) -> Player:
     return players[i]
 
 
-def counterclockwise_player(players: List[Player], player: Player, n: int) -> Player:
+def counterclockwise_player(players: Tuple[Player, ...], player: Player, n: int) -> Player:
     i = players.index(player)
     while n:
         i = (i - 1 if i > 0 else len(players) - 1) % len(players)
@@ -129,7 +129,7 @@ class _OfferActions(NamedTuple):
 
 
 class OfferActions(_OfferActions):
-    def apply(self, dice: ()) -> List[Player]:
+    def apply(self, dice: ()) -> Tuple[Player, ...]:
         while sum(self.can_resolve(dice)):
             players = self.players
             resolve = self.prompt(dice)
@@ -151,10 +151,10 @@ class OfferActions(_OfferActions):
 
     @staticmethod
     def can_resolve(dice: ()):
-        beers = Dice(dice).check_resolve(str(Die.BEER.value))
-        shot1 = Dice(dice).check_resolve(str(Die.SHOT1.value))
-        shot2 = Dice(dice).check_resolve(str(Die.SHOT2.value))
-        gatlings = Dice(dice).check_resolve(str(Die.GATLING.value)) // 3
+        beers = Dice(dice).check_resolve(Die.BEER)
+        shot1 = Dice(dice).check_resolve(Die.SHOT1)
+        shot2 = Dice(dice).check_resolve(Die.SHOT2)
+        gatlings = Dice(dice).check_resolve(Die.GATLING) // 3
 
         return beers, shot1, shot2, gatlings
 
@@ -181,7 +181,7 @@ class _DoBeer(NamedTuple):
 
 
 class DoBeer(_DoBeer):
-    def prompt(self, players: List[Player]) -> List[Player]:
+    def prompt(self, players: Tuple[Player, ...]) -> Tuple[Player, ...]:
         for player in players:
             logger.debug("({}) player {}".format(player.player_no, player))
 
@@ -205,7 +205,7 @@ class _DoShot1(NamedTuple):
 
 
 class DoShot1(_DoShot1):
-    def prompt(self, players: List[Player]) -> List[Player]:
+    def prompt(self, players: Tuple[Player, ...]) -> Tuple[Player, ...]:
 
         shoot_players = {
             clockwise_player(players, self.player, 1),
@@ -239,7 +239,7 @@ class _DoShot2(NamedTuple):
 
 
 class DoShot2(_DoShot2):
-    def prompt(self, players: List[Player]) -> List[Player]:
+    def prompt(self, players: Tuple[Player, ...]) -> Tuple[Player, ...]:
 
         shoot_players = {
             clockwise_player(players, self.player, 2),
@@ -272,11 +272,11 @@ class _DoGatlings(NamedTuple):
 
 
 class DoGatlings(_DoGatlings):
-    def apply(self, players: List[Player]) -> List[Player]:
+    def apply(self, players: Tuple[Player, ...]) -> Tuple[Player, ...]:
 
         for player in players:
             if player != self.player.player_no:
-                players = LoseLife(player, player).apply(1)
+                players = LoseLife(players, player).apply(1)
             else:
                 players = RemoveArrow(players, player).apply(MAX_ARROWS)
 

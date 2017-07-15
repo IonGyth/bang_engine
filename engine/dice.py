@@ -59,25 +59,25 @@ class Dice(_Dice):
         """
         return self.dice + (roll,)
 
-    def resolve(self, type) -> ():
+    def resolve(self, d_type: Die) -> ():
         """
         Remove a single dice from the pool of rolled dice.
         This is probably because that die has been resolved.
 
-        :param type: type of die that has been resolved
+        :param d_type: type of die that has been resolved
         :return: active dice that can be resolved.
         """
-        return self.add(self.current_roll.replace(type, '', 1))
+        return self.add(self.current_roll.replace(str(d_type.value), '', 1))
 
-    def check_resolve(self, type: Die) -> int:
+    def check_resolve(self, d_type: Die) -> int:
         """
         Check how many of a certain type of die can be resolved
 
-        :param type: type of die
+        :param d_type: type of die
         :return: number of dice
         """
         c_current_roll = Counter(self.current_roll)
-        return c_current_roll[type]
+        return c_current_roll[str(d_type.value)]
 
     def arrows(self) -> int:
         c_current_roll = Counter(self.current_roll)
@@ -90,9 +90,8 @@ class Dice(_Dice):
     def blown_up(self) -> bool:
         """
         Check if the player should have blown up.
-        :return: 1 if the player has blown up else 0
         """
-        return self.dynamites() // 3
+        return bool(self.dynamites() // 3)
 
     def roll(self) -> ():
         """
@@ -124,7 +123,7 @@ class Dice(_Dice):
 
 
 class _TurnRoll(NamedTuple):
-    players = List[Player]
+    players = Tuple[Player, ...]
     player = Player
 
 
@@ -185,12 +184,12 @@ class TurnRoll(_TurnRoll):
             and all([c_dice[dice] >= num for dice, num in c_reroll.most_common()])
         )
 
-    def check_arrows(self, dice: (), players: List[Player]) -> List[Player]:
+    def check_arrows(self, dice: (), players: Tuple[Player, ...]) -> Tuple[Player, ...]:
         player = GetPlayer(players).apply(int(self.player.player_no))
 
         return TakeArrow(self.players, player).apply(Dice(dice).arrows())
 
-    def check_blown_up(self, dice: (), players: List[Player]) -> List[Player]:
+    def check_blown_up(self, dice: (), players: Tuple[Player, ...]) -> Tuple[Player, ...]:
         player = GetPlayer(players).apply(int(self.player.player_no))
 
         if Dice(dice).blown_up():
