@@ -12,6 +12,8 @@ from player import (
     LoseLife,
     GainLife,
     BlowUp,
+    Role,
+    CheckGameEnd,
 )
 
 
@@ -126,6 +128,85 @@ class TestDeadPlayers(TestCase):
         self.assertEqual(
             len(players),
             2,
+        )
+
+
+class TestGameEnd(TestCase):
+    def setUp(self):
+        self.game = Game()
+
+    def test_sherrif_last_player(self):
+        game = AddPlayer(1).apply(self.game)
+
+        self.assertEqual(
+            CheckGameEnd().apply(game.players),
+            Role.SHERIFF,
+        )
+
+    def test_outlaw_last_player(self):
+        game = AddPlayer(3).apply(self.game)
+        players = game.players
+        for player in players:
+            if player.role != Role.OUTLAW:
+                players = UpdatePlayers(players, player._replace(life=0)).apply()
+
+        self.assertEqual(
+            CheckGameEnd().apply(players),
+            Role.OUTLAW,
+        )
+
+    def test_vice_last_player(self):
+        game = AddPlayer(8).apply(self.game)
+        players = game.players
+        for player in players:
+            if player.role != Role.VICE:
+                players = UpdatePlayers(players, player._replace(life=0)).apply()
+
+        self.assertEqual(
+            CheckGameEnd().apply(players),
+            Role.OUTLAW,
+        )
+
+    def test_sherrif_vice_last_player(self):
+        game = AddPlayer(8).apply(self.game)
+        players = game.players
+        for player in players:
+            if player.role not in [Role.VICE, Role.SHERIFF]:
+                players = UpdatePlayers(players, player._replace(life=0)).apply()
+
+        self.assertEqual(
+            CheckGameEnd().apply(players),
+            Role.SHERIFF,
+        )
+
+    def test_renegade_last_player(self):
+        game = AddPlayer(3).apply(self.game)
+        players = game.players
+        for player in players:
+            if player.role != Role.RENEGADE:
+                players = UpdatePlayers(players, player._replace(life=0)).apply()
+
+        self.assertEqual(
+            CheckGameEnd().apply(players),
+            Role.RENEGADE,
+        )
+
+    def test_two_renegade_last_players(self):
+        game = AddPlayer(8).apply(self.game)
+        players = game.players
+        for player in players:
+            if player.role != Role.RENEGADE:
+                players = UpdatePlayers(players, player._replace(life=0)).apply()
+
+        self.assertEqual(
+            CheckGameEnd().apply(players),
+            Role.OUTLAW,
+        )
+
+    def test_everybody_dead(self):
+        self.assertEqual(
+            CheckGameEnd().apply(()),
+            Role.OUTLAW,
         )
 
 
