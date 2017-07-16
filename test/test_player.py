@@ -64,7 +64,13 @@ class TestPlayer(TestCase):
     def test_gain_life_simple(self):
         players = UpdatePlayers(self.players, self.player._replace(life=3)).apply()
         self.assertEqual(
-            GainLife(players, self.player).apply(5),
+            GainLife(5).apply(players, self.player),
+            self.players
+        )
+
+    def test_gain_life_max(self):
+        self.assertEqual(
+            GainLife(1).apply(self.players, self.player),
             self.players
         )
 

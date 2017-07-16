@@ -199,17 +199,15 @@ class LoseLife(_LoseLife):
 
 
 class _GainLife(NamedTuple):
-    players: Tuple[Player]
-    player: Player
+    quantity: int
 
 
 class GainLife(_GainLife):
-    def apply(self, quantity: int) -> Tuple[Player, ...]:
-        players = self.players
-        player = GetPlayer(players).apply(int(self.player.p_id))
+    def apply(self, players: Tuple[Player], player: Player) -> Tuple[Player, ...]:
+        player = GetPlayer(players).apply(player.p_id)
 
-        if self.isvalid(player, quantity):
-            new_life = player.life + quantity
+        if self.isvalid(player, self.quantity):
+            new_life = player.life + self.quantity
             player = player._replace(life=new_life)
         else:
             logger.debug("This player is on max health!")

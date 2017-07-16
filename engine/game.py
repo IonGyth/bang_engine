@@ -190,8 +190,8 @@ class DoBeer(_DoBeer):
             p_id = self.get_response()
             player = GetPlayer(players).apply(p_id)
 
-            if GainLife(players, player).isvalid(player, 1):
-                players = GainLife(players, player).apply(1)
+            if GainLife(1).isvalid(player, 1):
+                players = GainLife(1).apply(players, player)
                 break
 
         return players
