@@ -44,8 +44,15 @@ class TestPlayer(TestCase):
     def test_remove_arrow_simple(self):
         players = UpdatePlayers(self.players, self.player._replace(arrows=5)).apply()
         self.assertEqual(
-            RemoveArrow(players, self.player).apply(5),
+            RemoveArrow(5).apply(players, self.player),
             UpdatePlayers(self.players, self.player._replace(arrows=0)).apply()
+        )
+
+    def test_remove_arrow_with_no_arrows(self):
+        players = UpdatePlayers(self.players, self.player._replace(arrows=0)).apply()
+        self.assertEqual(
+            RemoveArrow(1).apply(players, self.player),
+            UpdatePlayers(self.players, self.player).apply()
         )
 
     def test_lose_life_simple(self):

@@ -279,7 +279,7 @@ class DoGatlings(_DoGatlings):
             if player != self.player.p_id:
                 players = LoseLife(players, player).apply(1)
             else:
-                players = RemoveArrow(players, player).apply(MAX_ARROWS)
+                players = RemoveArrow(MAX_ARROWS).apply(players, player)
 
         return players
 

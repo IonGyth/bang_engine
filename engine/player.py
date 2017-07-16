@@ -155,17 +155,15 @@ class TakeArrow(_TakeArrow):
 
 
 class _RemoveArrow(NamedTuple):
-    players: Tuple[Player]
-    player: Player
+    quantity: int
 
 
 class RemoveArrow(_RemoveArrow):
-    def apply(self, quantity: int) -> Tuple[Player, ...]:
-        players = self.players
-        player = GetPlayer(players).apply(int(self.player.p_id))
+    def apply(self, players: Tuple[Player], player: Player) -> Tuple[Player, ...]:
+        player = GetPlayer(players).apply(int(player.p_id))
 
-        if self.isvalid(player, quantity):
-            new_arrows = player.arrows - quantity
+        if self.isvalid(player, self.quantity):
+            new_arrows = player.arrows - self.quantity
             player = player._replace(arrows=new_arrows)
         else:
             logger.debug("Not able to remove an arrow from player {}".format(player.p_id))
