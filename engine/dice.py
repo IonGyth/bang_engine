@@ -1,7 +1,7 @@
 import random
 from collections import Counter
 from enum import Enum
-from typing import NamedTuple, List
+from typing import NamedTuple, Tuple
 
 from bang_types import (
     NO_OF_DICE,
@@ -185,12 +185,12 @@ class TurnRoll(_TurnRoll):
         )
 
     def check_arrows(self, dice: (), players: Tuple[Player, ...]) -> Tuple[Player, ...]:
-        player = GetPlayer(players).apply(int(self.player.player_no))
+        player = GetPlayer(players).apply(int(self.player.p_id))
 
-        return TakeArrow(self.players, player).apply(Dice(dice).arrows())
+        return TakeArrow(Dice(dice).arrows()).apply(self.players, player)
 
     def check_blown_up(self, dice: (), players: Tuple[Player, ...]) -> Tuple[Player, ...]:
-        player = GetPlayer(players).apply(int(self.player.player_no))
+        player = GetPlayer(players).apply(int(self.player.p_id))
 
         if Dice(dice).blown_up():
             if LoseLife(players, player).isvalid(player, 1):

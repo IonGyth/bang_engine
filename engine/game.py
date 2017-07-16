@@ -37,7 +37,7 @@ class _Game(NamedTuple):
 
 class Game(_Game):
     def __new__(cls, players=None, moves=None):
-        return super(Game, cls).__new__(cls, players or [], moves or [])
+        return super(Game, cls).__new__(cls, players or (), moves or ())
 
     @property
     def next_player(self):
@@ -60,7 +60,7 @@ class Game(_Game):
 
     def to_dict(self):
         return dict(
-            players=[{p.player_no: p.to_dict()} for p in self.players],
+            players=[{p.p_id: p.to_dict()} for p in self.players],
             moves=[]
         )
 
@@ -97,10 +97,10 @@ class AddPlayer(_AddPlayer):
         """
         if self.isvalid(game):
             for _ in range(0, self.num):
-                player_no = game.num_players + 1
-                new_role = add_which_role[player_no]
+                p_id = game.num_players + 1
+                new_role = add_which_role[p_id]
 
-                game.players.append(Player(player_no=player_no, role=new_role))
+                game = game._replace(players=game.players + (Player(p_id=p_id, role=new_role),))
         else:
             logger.debug("Can't add more players to the game!")
 
@@ -118,9 +118,10 @@ class ShufflePlayers(object):
         :param game: shuffle the players in the game
         :return: the game with the players shuffled
         """
-        shuffle(game.players)
+        players = list(game.players)
+        shuffle(players)
 
-        return game
+        return game._replace(players=tuple(players))
 
 
 class _OfferActions(NamedTuple):
@@ -183,11 +184,11 @@ class _DoBeer(NamedTuple):
 class DoBeer(_DoBeer):
     def prompt(self, players: Tuple[Player, ...]) -> Tuple[Player, ...]:
         for player in players:
-            logger.debug("({}) player {}".format(player.player_no, player))
+            logger.debug("({}) player {}".format(player.p_id, player))
 
         while True:
-            player_no = self.get_response()
-            player = GetPlayer(players).apply(int(player_no))
+            p_id = self.get_response()
+            player = GetPlayer(players).apply(p_id)
 
             if GainLife(players, player).isvalid(player, 1):
                 players = GainLife(players, player).apply(1)
@@ -213,11 +214,11 @@ class DoShot1(_DoShot1):
         }
 
         for player in shoot_players:
-            logger.debug("({}) player {}".format(player.player_no, player))
+            logger.debug("({}) player {}".format(player.p_id, player))
 
         while True:
-            player_no = self.get_response()
-            player = GetPlayer(players).apply(int(player_no))
+            p_id = self.get_response()
+            player = GetPlayer(players).apply(p_id)
 
             if player not in shoot_players:
                 logger.debug("Invalid choice. Try again.")
@@ -246,11 +247,11 @@ class DoShot2(_DoShot2):
             counterclockwise_player(players, self.player, 2),
         }
         for player in shoot_players:
-            logger.debug("({}) player {}".format(player.player_no, player))
+            logger.debug("({}) player {}".format(player.p_id, player))
 
         while True:
-            player_no = self.get_response()
-            player = GetPlayer(players).apply(int(player_no))
+            p_id = self.get_response()
+            player = GetPlayer(players).apply(p_id)
 
             if player not in shoot_players:
                 logger.debug("Invalid choice. Try again.")
@@ -275,7 +276,7 @@ class DoGatlings(_DoGatlings):
     def apply(self, players: Tuple[Player, ...]) -> Tuple[Player, ...]:
 
         for player in players:
-            if player != self.player.player_no:
+            if player != self.player.p_id:
                 players = LoseLife(players, player).apply(1)
             else:
                 players = RemoveArrow(players, player).apply(MAX_ARROWS)
@@ -284,20 +285,3 @@ class DoGatlings(_DoGatlings):
 
     def prompt(self, players):
         return self.apply(players)
-
-
-class _ResolveArrows(NamedTuple):
-    players: Tuple[Player]
-
-
-class ResolveArrows(_ResolveArrows):
-    def apply(self):
-        for player in self.players:
-            ResolveArrows(player).apply()
-
-    def isvalid(self):
-        no_of_arrows = 0
-        for player in self.players:
-            no_of_arrows += player.arrows
-
-        return no_of_arrows >= MAX_ARROWS

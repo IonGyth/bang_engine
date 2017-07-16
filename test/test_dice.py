@@ -2,13 +2,8 @@ import unittest
 from unittest import (
     TestCase,
 )
-from unittest.mock import patch
 
 from dice import Dice
-from game import Game, DoBeer, DoShot1, DoShot2
-from player import (
-    AddPlayer,
-    UpdatePlayers, GetPlayer)
 
 
 class TestDice(TestCase):

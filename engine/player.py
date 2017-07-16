@@ -6,7 +6,6 @@ from bang_types import MAX_HEALTH, MAX_ARROWS
 
 import daiquiri
 
-daiquiri.setup()
 logger = daiquiri.getLogger()
 
 
@@ -18,7 +17,7 @@ class Role(Enum):
 
 
 class _Player(NamedTuple):
-    player_no: int = None
+    p_id: int = None
     life: int = 8
     arrows: int = 0
     role: Role = None
@@ -26,7 +25,7 @@ class _Player(NamedTuple):
 
 class Player(_Player):
     def __str__(self):
-        return "Player {} hp:{} ap:{}".format(self.player_no, self.life, self.arrows)
+        return "Player {} hp:{} ap:{}".format(self.p_id, self.life, self.arrows)
 
     def to_dict(self):
         return dict(
@@ -89,9 +88,9 @@ class _GetPlayer(NamedTuple):
 
 
 class GetPlayer(_GetPlayer):
-    def apply(self, player_no: int) -> Player:
+    def apply(self, p_id: int) -> Player:
         for player in self.players:
-            if player.player_no == player_no:
+            if player.p_id == p_id:
                 return player
 
 
@@ -102,38 +101,47 @@ class _UpdatePlayer(NamedTuple):
 
 class UpdatePlayers(_UpdatePlayer):
     def apply(self) -> Tuple[Player, ...]:
-        return tuple(player if player.player_no != self.player.player_no else self.player for player in self.players)
+        return tuple(player if player.p_id != self.player.p_id else self.player for player in self.players)
 
 
-class _ResolveArrows(NamedTuple):
-    players: Tuple[Player]
-    player: Player
+class ResolveAllArrows:
+    def apply(self, players: Tuple[Player, ...]) -> Tuple[Player, ...]:
+        if self.isvalid(players):
+            upd_players = ()
+            for player in players:
+                upd_players = upd_players + (ResolveArrows().apply(player),)
+
+        return upd_players
+
+    @staticmethod
+    def isvalid(players: Tuple[Player, ...]) -> bool:
+        no_of_arrows = 0
+        for player in players:
+            no_of_arrows += player.arrows
+
+        return no_of_arrows >= MAX_ARROWS
 
 
-class ResolveArrows(_ResolveArrows):
-    def apply(self) -> Player:
-        new_life = self.player.life - self.player.arrows
-        player = self.player._replace(life=new_life)
-        player = player._replace(arrows=0)
-
-        return player
+class ResolveArrows:
+    @staticmethod
+    def apply(player: Player) -> Player:
+        new_life = player.life - player.arrows
+        return player._replace(life=new_life, arrows=0)
 
 
 class _TakeArrow(NamedTuple):
-    players: Tuple[Player, ...]
-    player: Player
+    quantity: int
 
 
 class TakeArrow(_TakeArrow):
-    def apply(self, quantity: int) -> Tuple[Player, ...]:
-        players = self.players
-        player = GetPlayer(players).apply(int(self.player.player_no))
-
-        for _ in range(0, quantity):
+    def apply(self, players: Tuple[Player, ...], player: Player) -> Tuple[Player, ...]:
+        for _ in range(0, self.quantity):
             player = player._replace(arrows=player.arrows + 1)
+            players = UpdatePlayers(players, player).apply()
 
             if self.check_resolve(players):
-                player = ResolveArrows(players).apply()
+                players = ResolveAllArrows().apply(players)
+                player = GetPlayer(players).apply(player.p_id)
 
         return UpdatePlayers(players, player).apply()
 
@@ -154,13 +162,13 @@ class _RemoveArrow(NamedTuple):
 class RemoveArrow(_RemoveArrow):
     def apply(self, quantity: int) -> Tuple[Player, ...]:
         players = self.players
-        player = GetPlayer(players).apply(int(self.player.player_no))
+        player = GetPlayer(players).apply(int(self.player.p_id))
 
         if self.isvalid(player, quantity):
             new_arrows = player.arrows - quantity
             player = player._replace(arrows=new_arrows)
         else:
-            logger.debug("Not able to remove an arrow from player {}".format(player.player_no))
+            logger.debug("Not able to remove an arrow from player {}".format(player.p_id))
 
         return UpdatePlayers(players, player).apply()
 
@@ -177,7 +185,7 @@ class _LoseLife(NamedTuple):
 class LoseLife(_LoseLife):
     def apply(self, quantity: int) -> Tuple[Player, ...]:
         players = self.players
-        player = GetPlayer(players).apply(int(self.player.player_no))
+        player = GetPlayer(players).apply(int(self.player.p_id))
 
         if self.isvalid(player, quantity):
             new_life = player.life - quantity
@@ -200,7 +208,7 @@ class _GainLife(NamedTuple):
 class GainLife(_GainLife):
     def apply(self, quantity: int) -> Tuple[Player, ...]:
         players = self.players
-        player = GetPlayer(players).apply(int(self.player.player_no))
+        player = GetPlayer(players).apply(int(self.player.p_id))
 
         if self.isvalid(player, quantity):
             new_life = player.life + quantity
@@ -223,7 +231,7 @@ class _BlowUp(NamedTuple):
 class BlowUp(_BlowUp):
     def apply(self, quantity: int) -> Tuple[Player, ...]:
         players = self.players
-        player = GetPlayer(players).apply(int(self.player.player_no))
+        player = GetPlayer(players).apply(int(self.player.p_id))
 
         new_life = player.life - quantity
         player = player._replace(life=new_life)
