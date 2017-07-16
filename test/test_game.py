@@ -20,11 +20,6 @@ class TestGame(TestCase):
         self.players = self.game.players
         self.player = self.game.next_player
 
-    def tearDown(self):
-        self.game = None
-        self.players = None
-        self.player = None
-
     @patch('game.DoShot1.get_response', return_value=2)
     def test_do_shot1(self, get_response):
         player2 = GetPlayer(self.players).apply(2)
@@ -74,11 +69,6 @@ class TestGame1v1(TestCase):
         self.game = game
         self.players = self.game.players
         self.player = self.game.next_player
-
-    def tearDown(self):
-        self.game = None
-        self.players = None
-        self.player = None
 
     @patch('game.DoShot2.get_response', side_effect=[1, 2])
     def test_do_shot2_not_self_in_1v1(self, get_response):

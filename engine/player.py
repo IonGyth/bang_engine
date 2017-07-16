@@ -101,7 +101,15 @@ class _UpdatePlayer(NamedTuple):
 
 class UpdatePlayers(_UpdatePlayer):
     def apply(self) -> Tuple[Player, ...]:
-        return tuple(player if player.p_id != self.player.p_id else self.player for player in self.players)
+        players = ()
+        for player in self.players:
+            if player.p_id == self.player.p_id:
+                if self.player.life > 0:
+                    players = players + (self.player,)
+            else:
+                players = players + (player,)
+
+        return players
 
 
 class ResolveAllArrows:

@@ -24,11 +24,6 @@ class TestPlayer(TestCase):
         self.players = self.game.players
         self.player = self.game.next_player
 
-    def tearDown(self):
-        self.game = None
-        self.players = None
-        self.player = None
-
     def test_get_player(self):
         self.assertEqual(
             GetPlayer(self.players).apply(int(self.player.p_id)),
@@ -90,11 +85,6 @@ class TestPlayers(TestCase):
         self.players = self.game.players
         self.player = self.game.next_player
 
-    def tearDown(self):
-        self.game = None
-        self.players = None
-        self.player = None
-
     def test_take_arrow_resolve(self):
         players = self.players
 
@@ -115,6 +105,27 @@ class TestPlayers(TestCase):
         self.assertEqual(
             GetPlayer(players).apply(player.p_id).life,
             3,
+        )
+
+
+class TestDeadPlayers(TestCase):
+    def setUp(self):
+        game = Game()
+        if not game.num_players:
+            game = AddPlayer(3).apply(game)
+        self.game = ShufflePlayers().apply(game)
+        self.players = self.game.players
+        self.player = self.game.next_player
+
+    def test_dead_players_removed(self):
+        self.assertEqual(
+            len(self.players),
+            3,
+        )
+        players = UpdatePlayers(self.players, self.player._replace(life=0)).apply()
+        self.assertEqual(
+            len(players),
+            2,
         )
 
 
