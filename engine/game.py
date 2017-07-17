@@ -1,5 +1,5 @@
 from random import shuffle
-from typing import NamedTuple, Tuple
+from typing import NamedTuple, Tuple, Set, Optional
 
 from bang_types import MAX_ARROWS, NO_OF_PLAYERS
 from dice import Die, Dice
@@ -9,7 +9,6 @@ from player import (
     GainLife,
     Role,
     GetPlayer,
-    PrintAllPlayers,
     Player,
 )
 
@@ -124,29 +123,37 @@ class ShufflePlayers(object):
         return game._replace(players=tuple(players))
 
 
-class _OfferActions(NamedTuple):
-    players: Tuple[Player] = ()
-    player: Player = None
+class _DoAction(NamedTuple):
+    dice: tuple
+    choice: Die
 
 
-class OfferActions(_OfferActions):
-    def apply(self, dice: ()) -> Tuple[Player, ...]:
+class DoAction(_DoAction):
+    def offer(self, players: Tuple[Player, ...], player: Player) -> Optional[Set[Player]]:
+        if self.choice == Die.BEER:
+            return DoBeer(player).target(players)
+        elif self.choice == Die.SHOT1:
+            return DoShot1(player).target(players)
+        elif self.choice == Die.SHOT2:
+            return DoShot2(player).target(players)
+
+        return None
+
+    def apply(self, players: Tuple[Player], player: Player) -> Tuple[Player, ...]:
+        dice = self.dice
+
         while sum(self.can_resolve(dice)):
-            players = self.players
-            resolve = self.prompt(dice)
 
-            if resolve == str(Die.BEER.value):
-                players = DoBeer(self.player).prompt(players)
-            elif resolve == str(Die.SHOT1.value):
-                players = DoShot1(self.player).prompt(players)
-            elif resolve == str(Die.SHOT2.value):
-                players = DoShot2(self.player).prompt(players)
-            elif resolve == str(Die.GATLING.value):
-                players = DoGatlings(self.player).prompt(players)
+            if self.choice == Die.BEER:
+                players = DoBeer(player).prompt(players)
+            elif self.choice == Die.SHOT1:
+                players = DoShot1(player).prompt(players)
+            elif self.choice == Die.SHOT2:
+                players = DoShot2(player).prompt(players)
+            elif self.choice == Die.GATLING:
+                players = DoGatlings(player).prompt(players)
 
-            dice = Dice(dice).resolve(resolve)
-
-            PrintAllPlayers().apply(self.players)
+            dice = Dice(dice).resolve(self.choice)
 
         return players
 
@@ -182,6 +189,10 @@ class _DoBeer(NamedTuple):
 
 
 class DoBeer(_DoBeer):
+    @staticmethod
+    def target(players: Tuple[Player, ...]):
+        return set(players)
+
     def prompt(self, players: Tuple[Player, ...]) -> Tuple[Player, ...]:
         for player in players:
             logger.debug("({}) player {}".format(player.p_id, player))
@@ -206,12 +217,15 @@ class _DoShot1(NamedTuple):
 
 
 class DoShot1(_DoShot1):
-    def prompt(self, players: Tuple[Player, ...]) -> Tuple[Player, ...]:
-
-        shoot_players = {
+    def target(self, players: Tuple[Player, ...]):
+        return {
             clockwise_player(players, self.player, 1),
             counterclockwise_player(players, self.player, 1),
         }
+
+    def prompt(self, players: Tuple[Player, ...]) -> Tuple[Player, ...]:
+
+        shoot_players = self.target(players)
 
         for player in shoot_players:
             logger.debug("({}) player {}".format(player.p_id, player))
@@ -240,12 +254,16 @@ class _DoShot2(NamedTuple):
 
 
 class DoShot2(_DoShot2):
-    def prompt(self, players: Tuple[Player, ...]) -> Tuple[Player, ...]:
-
-        shoot_players = {
+    def target(self, players: Tuple[Player, ...]):
+        return {
             clockwise_player(players, self.player, 2),
             counterclockwise_player(players, self.player, 2),
         }
+
+    def prompt(self, players: Tuple[Player, ...]) -> Tuple[Player, ...]:
+
+        shoot_players = self.target(players)
+
         for player in shoot_players:
             logger.debug("({}) player {}".format(player.p_id, player))
 

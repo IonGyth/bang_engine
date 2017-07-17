@@ -1,5 +1,5 @@
 from dice import TurnRoll
-from game import Game, OfferActions
+from game import Game, DoAction
 from player import AddPlayer, ShufflePlayers, CheckGameEnd
 
 import daiquiri
@@ -20,4 +20,4 @@ if __name__ == '__main__':
         dice, players = TurnRoll(game.players, game.next_player).apply()
 
         if CheckGameEnd().apply(game.players) is None:
-            OfferActions(game.players, game.next_player).apply(dice)
+            DoAction(game.players, game.next_player).apply(dice)

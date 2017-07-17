@@ -4,7 +4,17 @@ from unittest import (
 )
 from unittest.mock import patch
 
-from game import Game, DoBeer, DoShot1, DoShot2, AddPlayer
+from dice import Die
+from game import (
+    Game,
+    DoBeer,
+    DoShot1,
+    DoShot2,
+    AddPlayer,
+    DoAction,
+    clockwise_player,
+    counterclockwise_player,
+)
 from player import (
     UpdatePlayers,
     GetPlayer,
@@ -14,8 +24,7 @@ from player import (
 class TestGame(TestCase):
     def setUp(self):
         game = Game()
-        if not game.num_players:
-            game = AddPlayer(4).apply(game)
+        game = AddPlayer(4).apply(game)
         self.game = game
         self.players = self.game.players
         self.player = self.game.next_player
@@ -79,6 +88,45 @@ class TestGame1v1(TestCase):
             UpdatePlayers(self.players, player2._replace(life=7)).apply()
         )
         self.assertEqual(get_response.call_count, 2)
+
+
+class TestOfferActions(TestCase):
+    def setUp(self):
+        game = Game()
+        game = AddPlayer(3).apply(game)
+        self.game = game
+        self.players = self.game.players
+        self.player = self.game.next_player
+
+    def test_offer_action_beer(self):
+        dice = ('0',)
+        choice = Die.BEER
+        self.assertEqual(
+            DoAction(dice, choice).offer(self.players, self.player),
+            set(self.players),
+        )
+
+    def test_offer_action_shot1(self):
+        dice = ('1',)
+        choice = Die.SHOT1
+        self.assertEqual(
+            DoAction(dice, choice).offer(self.players, self.player),
+            {
+                clockwise_player(self.players, self.player, 1),
+                counterclockwise_player(self.players, self.player, 1)
+            }
+        )
+
+    def test_offer_action_shot2(self):
+        dice = ('2',)
+        choice = Die.SHOT2
+        self.assertEqual(
+            DoAction(dice, choice).offer(self.players, self.player),
+            {
+                clockwise_player(self.players, self.player, 2),
+                counterclockwise_player(self.players, self.player, 2)
+            }
+        )
 
 if __name__ == '__main__':
     unittest.main()

@@ -3,7 +3,12 @@ from unittest import (
     TestCase,
 )
 
-from game import Game, AddPlayer, ShufflePlayers, clockwise_player
+from game import (
+    Game,
+    AddPlayer,
+    ShufflePlayers,
+    clockwise_player,
+)
 from player import (
     GetPlayer,
     TakeArrow,

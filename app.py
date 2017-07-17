@@ -4,8 +4,7 @@ from uuid import uuid4
 from datetime import timedelta
 from flask import Flask, render_template
 from flask_socketio import SocketIO, emit, send
-from game import Game
-from player import AddPlayer, ShufflePlayers
+from game import Game, AddPlayer, ShufflePlayers
 from redis import Redis
 from werkzeug.datastructures import CallbackDict
 from flask.sessions import SessionInterface, SessionMixin

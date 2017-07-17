@@ -27,7 +27,7 @@ class Player(_Player):
     def __str__(self):
         return "Player {} hp:{} ap:{}".format(self.p_id, self.life, self.arrows)
 
-    def to_dict(self):
+    def to_dict(self) -> dict:
         return dict(
             life=self.life,
             arrows=self.arrows,
